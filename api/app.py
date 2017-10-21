@@ -10,8 +10,8 @@ import time
 # --------------------- twitch connection --------------------------
 twitch = TwitchChatStream(username='andy_bear', oauth="oauth:xq4wjakbw4ay9dqphlt7eb17iiuyyq".encode())
 twitch.connect()
-twitch.join_channel("gosu")
-twitch.join_channel("dossierchannel")
+twitch.join_channel("nightblue3")
+twitch.join_channel("handiofiblood")
 #twitch.twitch_receive_messages()
 
 history = {}
@@ -126,6 +126,8 @@ def getHistory():
 
 @app.route('/reset', methods=['POST'])
 def resetConnect():
+  global history
+  global twitch
   if request.method == 'POST':
     twitch.connect()
     history = {}

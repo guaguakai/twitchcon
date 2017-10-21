@@ -320,7 +320,6 @@ class App extends Component {
           </Form>
         </Col>
         { highcharts }
-        <div>Seconds Elapsed: {this.state.secondsElapsed}</div>
       </div>
     );
   }
