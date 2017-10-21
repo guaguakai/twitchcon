@@ -2,10 +2,35 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import ReactHighcharts from 'react-highcharts';
-import 'whatwg-fetch'
+import 'whatwg-fetch';
+import {Col, Row, Navbar} from 'react-bootstrap';
+import ReactPlayer from 'react-player'
+import { shuffle, range } from 'd3-array';
+import { easeBackOut, easeBackInOut } from 'd3-ease';
+import NodeGroup from 'react-move/NodeGroup';
+
+const EMOJIES = require('./emojies.js').EMOJIES;
+console.log(EMOJIES);
+
+const count = 20;
+
+function getData() {
+  var arr = [];
+  while (arr.length < count) {
+    arr.push(Math.random()*15);
+  }
+  return shuffle(arr.map((d) => ({ value: d }))).slice(0, count/2);
+}
 
 
-function configSetting(channelHistory) {
+ReactHighcharts.Highcharts.setOptions(
+{
+  global: {
+    useUTC: false,
+  }
+});
+
+function configSetting(channelHistory, title) {
   if (channelHistory) {
     var draw_series = [];
     var keys = Object.keys(channelHistory);
@@ -21,7 +46,7 @@ function configSetting(channelHistory) {
       zoomType: 'x'
     },
     title: {
-      text: 'title',
+      text: 'https://go.twitch.tv/' + title.slice(1),
       x: -20 //center
     },
     rangeSelector: {
@@ -32,7 +57,7 @@ function configSetting(channelHistory) {
     },
     yAxis: {
       title: {
-        text: 'Rank'
+        text: 'Frequency'
       },
       plotLines: [{
         value: 0,
@@ -50,16 +75,24 @@ const api_history = 'https://0.0.0.0:5000/history'
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {secondsElapsed: 0, history: {}};
+    this.state = {secondsElapsed: 0, history: {}, width: null, items: [], emojies: {}, displayEmojies: {}};
     this.tick = this.tick.bind(this);
     this.getHistory = this.getHistory.bind(this);
+    this.updateWidth = this.updateWidth.bind(this);
+    this.container = {};
     this.getHistory();
   }
   componentDidMount() {
     this.interval = setInterval(this.tick, 10000);
+    window.addEventListener('resize', this.updateWidth);
+    this.updateWidth();
   }
   componentWillUnmount() {
     clearInterval(this.interval);
+    window.removeEventListener('resize', this.updateWidth);
+  }
+  updateWidth = () => {
+    this.setState(() => ({ width: this.container.offsetWidth || 200 }));
   }
   tick() {
     this.setState({secondsElapsed: this.state.secondsElapsed + 10})
@@ -75,35 +108,162 @@ class App extends Component {
     }).then(res => {
       if (res.ok) {
         res.json().then( data => {
-          this.setState({history: data});
+          var emojies = {};
+          var displayEmojies = {};
+          var channelKeys = Object.keys(data);
+          for (var i = 0; i < channelKeys.length; i++) {
+            var channelID = channelKeys[i];
+            emojies[channelID] = data[channelID]['emojies']
+
+            var count = emojies[channelID].length;
+            displayEmojies[channelID] = emojies[channelID]; //shuffle(range(count).map((d) => ({ value: d }))).slice(0, count);
+
+            delete data[channelID]['emojies'];
+          }
+
+          this.setState({history: data, emojies: emojies, displayEmojies: displayEmojies});
           console.log(this.state.history);
+          console.log(this.state.emojies);
+          console.log(this.state.displayEmojies);
         })
       }
     })
   }
+  test(key, tmpDisplayEmojies) {
+    console.log('test');
+    console.log(tmpDisplayEmojies);
+    console.log(key);
+    console.log(tmpDisplayEmojies[key]);
+    if (tmpDisplayEmojies[key]) {
+      if (EMOJIES[tmpDisplayEmojies[key].toLowerCase()]) {
+        return <img src= {"https://static-cdn.jtvnw.net/emoticons/v2/" + EMOJIES[tmpDisplayEmojies[key].toLowerCase()].id + "/1.0"} ></img>
+      } else {
+        return <div></div>
+      }
+    } else {
+      return <div></div>
+    }
+  }
   render() {
+    var width = this.state.width;
+
+
     var highcharts = [];
     if (this.state.history) {
       var historyKeys = Object.keys(this.state.history);
       for(var i = 0; i < historyKeys.length; i++) {
         var channelID = historyKeys[i];
-        console.log(channelID);
+        var tmpDisplayEmojies = this.state.displayEmojies[channelID];
+        var count = tmpDisplayEmojies.length;
+        if (count === 0){
+          var items = [];
+        } else {
+          var items = shuffle(range(count).map((d) => ({ value: d }))).slice(0, count/1.5);
+        }
+        // var items = range(count);
+        console.log('items:');
+        console.log(items);
+        console.log('tmp display emojies:');
+        console.log(tmpDisplayEmojies);
+        var videoConfig = {width: 800, height: 600, channel: channelID.slice(1)};
         var channelHistory = this.state.history[channelID];
+        var emojies = this.state.emojies[channelID];
+        delete this.state.history[channelID]['emojies'];
         var highchartComponent = (
-          <ReactHighcharts config = {configSetting(channelHistory)}></ReactHighcharts>
+          <div>
+            <Col md={5}>
+              <iframe
+                  src= {"https://player.twitch.tv/?channel=" + channelID.slice(1) + "&muted=true"}
+                  height="400"
+                  width="600"
+                  frameborder="50"
+                  scrolling="yes"
+                  allowfullscreen="true">
+              </iframe>
+              <ReactHighcharts config={configSetting(channelHistory, channelID)} ></ReactHighcharts>
+            </Col>
+          </div>
         );
-        highcharts.push(highchartComponent);
+        var emojiesComponent = (
+          <div>
+            <Col md={1}>
+              <div ref={(d) => { this.container = d; }}>
+                {width === null ? null : (
+                  <NodeGroup
+                    data={items}
+                    keyAccessor={(d) => d.value}
+    
+                    start={() => ({
+                      x: width*0.5,
+                      opacity: 0,
+                      color: 'black',
+                    })}
+    
+                    enter={() => ([
+                      {
+                        x: [width * -0.5],
+                        color: ['#00cf77'],
+                        timing: { delay: 400 + (Math.random() * 200), duration: 400 + (Math.random() * 200), ease: easeBackOut },
+                      },
+                      {
+                        opacity: [1],
+                        timing: { duration: 400 + (Math.random() * 200)},
+                      },
+                    ])}
+    
+                    leave={() => ([
+                      {
+                        x: [width * -3],
+                        color: ['#ff0063', 'black'],
+                        timing: { duration: 1800 + (Math.random() * 400), ease: easeBackInOut },
+                      },
+                      {
+                        opacity: [0],
+                        timing: { delay: 600 + (Math.random() * 300), duration: 1800 + (Math.random() * 400) },
+                      },
+                    ])}
+                  >
+                    {(nodes) => (
+                      <div style={{ margin: 10, height: count * 20, position: 'relative' }}>
+                        {nodes.map(({ key, state: { x, opacity, color } }) => (
+                          <div
+                            key={key}
+                            style={{
+                              position: 'absolute',
+                              transform: `translate(${x}px, ${Math.random() * 20 + key*200/count}px)`,
+                              opacity,
+                              color,
+                            }}
+                          >
+                            { this.test(key, tmpDisplayEmojies) }
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </NodeGroup>
+                )}
+              </div>
+            </Col>
+          </div>
+        );
+        var bigComponent = (
+          <div>
+            { highchartComponent }
+            { emojiesComponent }
+          </div>
+        );
+        highcharts.push(bigComponent);
       }
     }
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
+        <Navbar>
+          <Navbar.Header>
+            <Navbar.Brand>
+              <a size="60">Emoji Detection</a>
+            </Navbar.Brand>
+          </Navbar.Header>
+        </Navbar>
         { highcharts }
         <div>Seconds Elapsed: {this.state.secondsElapsed}</div>
       </div>
