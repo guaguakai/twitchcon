@@ -61,6 +61,11 @@ CORS(app)
 def test():
   return 'hello world!'
 
+@app.route('/history', methods=['GET'])
+def getHistory():
+  if request.method == 'GET':
+    return jsonify(history), 201
+
 @app.route('/reset', methods=['POST'])
 def resetConnect():
   if request.method == 'POST':
@@ -78,6 +83,6 @@ def addChannel():
 
 
 if __name__ == '__main__':
-  app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
   receive()
+  app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
 
