@@ -45,7 +45,7 @@ function configSetting(channelHistory) {
   };
 }
 
-const api_history = 'http://0.0.0.0:5000/history'
+const api_history = 'https://0.0.0.0:5000/history'
 
 class App extends Component {
   constructor(props) {
@@ -92,6 +92,7 @@ class App extends Component {
         var highchartComponent = (
           <ReactHighcharts config = {configSetting(channelHistory)}></ReactHighcharts>
         );
+        highcharts.push(highchartComponent);
       }
     }
     return (
@@ -103,7 +104,6 @@ class App extends Component {
         <p className="App-intro">
           To get started, edit <code>src/App.js</code> and save to reload.
         </p>
-        <ReactHighcharts config = {configSetting(this.state.history['#kamikat'])}></ReactHighcharts>
         { highcharts }
         <div>Seconds Elapsed: {this.state.secondsElapsed}</div>
       </div>

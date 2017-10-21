@@ -11,6 +11,7 @@ import time
 twitch = TwitchChatStream(username='andy_bear', oauth="oauth:xq4wjakbw4ay9dqphlt7eb17iiuyyq".encode())
 twitch.connect()
 twitch.join_channel("riotgames")
+twitch.join_channel("imls")
 #twitch.twitch_receive_messages()
 
 history = {}
@@ -134,6 +135,6 @@ def addChannel():
 
 if __name__ == '__main__':
   receive()
-  #app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
-  app.run(debug=False, host="0.0.0.0", port=5000)
+  app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
+  #app.run(debug=False, host="0.0.0.0", port=5000)
 
