@@ -45,7 +45,7 @@ function configSetting(channelHistory) {
   };
 }
 
-const api_history = 'https://0.0.0.0:5000/history'
+const api_history = 'http://0.0.0.0:5000/history'
 
 class App extends Component {
   constructor(props) {

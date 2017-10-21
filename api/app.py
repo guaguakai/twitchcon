@@ -134,5 +134,6 @@ def addChannel():
 
 if __name__ == '__main__':
   receive()
-  app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
+  #app.run(debug=False, host="0.0.0.0", port=5000, ssl_context="adhoc")
+  app.run(debug=False, host="0.0.0.0", port=5000)
 
