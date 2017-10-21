@@ -3,11 +3,12 @@ import logo from './logo.svg';
 import './App.css';
 import ReactHighcharts from 'react-highcharts';
 import 'whatwg-fetch';
-import {Col, Row, Navbar} from 'react-bootstrap';
+import {Col, Row, Navbar, Form, FormGroup, FormControl, ControlLabel, Button} from 'react-bootstrap';
 import ReactPlayer from 'react-player'
 import { shuffle, range } from 'd3-array';
 import { easeBackOut, easeBackInOut } from 'd3-ease';
 import NodeGroup from 'react-move/NodeGroup';
+import Input from './Input';
 
 const EMOJIES = require('./emojies.js').EMOJIES;
 console.log(EMOJIES);
@@ -70,8 +71,11 @@ function configSetting(channelHistory, title) {
   };
 }
 
-//const api_history = 'https://0.0.0.0:5000/history'
-const api_history = 'https://52.229.19.76:5000/history'
+const api_addr = 'https://52.229.19.76:5000';
+//const api_history = 'https://0.0.0.0:5000/history';
+const api_history = api_addr + '/history';
+const api_reset = api_addr + '/reset';
+const api_add = api_addr + '/add';
 
 class App extends Component {
   constructor(props) {
@@ -81,6 +85,7 @@ class App extends Component {
     this.getHistory = this.getHistory.bind(this);
     this.updateWidth = this.updateWidth.bind(this);
     this.container = {};
+    this.input = "";
     this.getHistory();
   }
   componentDidMount() {
@@ -98,6 +103,42 @@ class App extends Component {
   tick() {
     this.setState({secondsElapsed: this.state.secondsElapsed + 10})
     this.getHistory();
+  }
+  postReset() {
+    console.log('start reseting...');
+    return fetch(api_reset, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    }).then(res => {
+      if (res.ok) {
+        res.json().then( data => {
+          console.log('reseting...');
+        })
+      }
+    })
+  }
+  postAdd(channelName) {
+    console.log('start adding...');
+    fetch(api_add, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        channelName: channelName
+      })
+    }).then(res => {
+      if (res.ok) {
+        res.json().then( data => {
+          console.log('adding ' + channelName + ' ...');
+        })
+      }
+    })
   }
   getHistory() {
     fetch(api_history, {
@@ -137,13 +178,16 @@ class App extends Component {
     console.log(tmpDisplayEmojies[key]);
     if (tmpDisplayEmojies[key]) {
       if (EMOJIES[tmpDisplayEmojies[key].toLowerCase()]) {
-        return <img src= {"https://static-cdn.jtvnw.net/emoticons/v2/" + EMOJIES[tmpDisplayEmojies[key].toLowerCase()].id + "/1.0"} ></img>
+        return <img src= {"https://static-cdn.jtvnw.net/emoticons/v1/" + EMOJIES[tmpDisplayEmojies[key].toLowerCase()].id + "/1.0"} ></img>
       } else {
         return <div></div>
       }
     } else {
       return <div></div>
     }
+  }
+  handleInputChange(e) {
+    this.input = e.target.value;
   }
   render() {
     var width = this.state.width;
@@ -265,6 +309,16 @@ class App extends Component {
             </Navbar.Brand>
           </Navbar.Header>
         </Navbar>
+        <Col ms={12}>
+          <Form inline>
+            <Col ms={6}>
+              <Input postAdd={this.postAdd.bind(this)} />
+            </Col>
+            <Col ms={6}>
+              <Button onClick={this.postReset.bind(this)} >Reset</Button>
+            </Col>
+          </Form>
+        </Col>
         { highcharts }
         <div>Seconds Elapsed: {this.state.secondsElapsed}</div>
       </div>

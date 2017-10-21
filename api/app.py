@@ -129,11 +129,15 @@ def resetConnect():
   if request.method == 'POST':
     twitch.connect()
     history = {}
+    return jsonify({'status': 'success'}), 201
+  else:
+    abort(400)
+
 
 @app.route('/add', methods=['POST'])
 def addChannel():
   if request.method == 'POST':
-    channelID = request.json[channelName]
+    channelID = request.json['channelName']
     twitch.join_channel(channelID)
     return jsonify({'status': 'success'}), 201
   else:
