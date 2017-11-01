@@ -7,8 +7,10 @@ from twitchstream.chat import TwitchChatStream
 import threading
 import time
 
+#Add username & oauth key to make it work
+
 # --------------------- twitch connection --------------------------
-twitch = TwitchChatStream(username='andy_bear', oauth="oauth:xq4wjakbw4ay9dqphlt7eb17iiuyyq".encode())
+twitch = TwitchChatStream(username='', oauth="oauth: ".encode())
 twitch.connect()
 twitch.join_channel("nightblue3")
 twitch.join_channel("handiofiblood")
